@@ -1,9 +1,10 @@
 ﻿@page "/logout"
 @using Blazor8Auth.Services
+@using Blazor8Auth.Services.Authorization
 
 @code {
-    [Inject] private NavigationManager NavigationManager { get; set; }
-    [Inject] private IAuthService AuthService { get; set; }
+    [Inject] private NavigationManager? NavigationManager { get; set; }
+    [Inject] private IAuthService? AuthService { get; set; }
 
     protected override async Task OnInitializedAsync()
     {

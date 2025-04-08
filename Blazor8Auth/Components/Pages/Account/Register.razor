@@ -1,0 +1,81 @@
+﻿@page "/register"
+
+@using Blazor8Auth.Database.Contexts
+@using Blazor8Auth.Database.Models
+@using Blazor8Auth.Services
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using Blazor8Auth.Services.Interfaces
+@inject AppDbContext DbContext
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+@inject IPasswordHasher PasswordHasher
+
+
+<h3>Register</h3>
+
+<MudContainer>
+    <MudPaper>
+        <MudForm>
+            <MudTextField T="string" @bind-Value="_email" Label="E-mail" Placeholder="example@mail.com"
+                          Required="true" RequiredError="E-mail is required!" />
+            <MudTextField T="string" @bind-Value="_newPassword" Label="Wachtwoord" Required="true" RequiredError="Wachtwoord is verplicht!"
+                          InputType="@_passwordInput" Adornment="Adornment.End" AdornmentIcon="@_passwordInputIcon"
+                          OnAdornmentClick="ShowPassword" AdornmentAriaLabel="Show Password" />
+            <MudTextField T="string" @bind-Value="_confirmPassword" Label="Herhaal wachtwoord" Required="true" RequiredError="Wachtwoord is verplicht!"
+                          InputType="@_passwordInput" Adornment="Adornment.End" AdornmentIcon="@_passwordInputIcon"
+                          OnAdornmentClick="ShowPassword" AdornmentAriaLabel="Show Password" />
+            <br />
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@IsPasswordInvalid" OnClick="HandleRegister">Registreren</MudButton>
+        </MudForm>
+    </MudPaper>
+</MudContainer>
+
+@code {
+
+    private string _email = string.Empty;
+    private string _newPassword = string.Empty;
+    private string _confirmPassword = string.Empty;
+    private bool _isShow;
+    private InputType _passwordInput = InputType.Password;
+    private string _passwordInputIcon = Icons.Material.Filled.VisibilityOff;
+    private bool IsPasswordInvalid => string.IsNullOrWhiteSpace(_email) || string.IsNullOrWhiteSpace(_newPassword) || _newPassword != _confirmPassword;
+
+    private void ShowPassword()
+    {
+        _isShow = !_isShow;
+        _passwordInputIcon = _isShow ? Icons.Material.Filled.Visibility : Icons.Material.Filled.VisibilityOff;
+        _passwordInput = _isShow ? InputType.Text : InputType.Password;
+    }
+
+    private async Task HandleRegister()
+    {
+        if (IsPasswordInvalid)
+        {
+            Snackbar.Add("Controleer je invoer: velden leeg of wachtwoorden komen niet overeen.", Severity.Error);
+            return;
+        }
+
+        // Check of user al bestaat
+        var existing = await DbContext.Users.FirstOrDefaultAsync(u => u.Email == _email);
+        if (existing != null)
+        {
+            Snackbar.Add("E-mailadres is al geregistreerd!", Severity.Error);
+            return;
+        }
+
+        var user = new User
+        {
+            Email = _email,
+            PasswordHash = PasswordHasher.Hash(_newPassword),
+            RoleId = 2 // Stel dat 1 staat voor 'user', anders gebruik juiste ID
+        };
+
+        DbContext.Users.Add(user);
+        await DbContext.SaveChangesAsync();
+
+        Snackbar.Add("Account succesvol aangemaakt!", Severity.Success);
+        Navigation.NavigateTo("/login");
+    }
+
+}

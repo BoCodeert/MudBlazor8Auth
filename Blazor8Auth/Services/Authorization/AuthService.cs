@@ -2,7 +2,7 @@
 using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
 
-namespace Blazor8Auth.Services
+namespace Blazor8Auth.Services.Authorization
 {
     /// <summary>
     /// Store and manage the current user's authentication state as a browser Session JWT and in Server Side Blazor

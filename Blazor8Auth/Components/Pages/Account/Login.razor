@@ -1,0 +1,102 @@
+﻿@page "/login"
+@using Blazor8Auth.Services
+@using Blazor8Auth.Services.Authorization
+@using Microsoft.AspNetCore.WebUtilities
+@using Microsoft.AspNetCore.WebUtilities
+@inject ISnackbar Snackbar
+
+<MudPaper Class="m-4 pa-4" Elevation="4">
+   <MudCard>
+        <MudCardContent>
+            <MudText>Please enter your login details</MudText>
+            <MudForm>
+                <MudTextField T="string" @bind-Value="LoginModel.Email" Label="E-mail" Placeholder="example@mail.com"
+                              Required="true" RequiredError="E-mail is required!" />
+                <MudTextField T="string" @bind-Value="LoginModel.Password" Label="Wachtwoord" Required="true" RequiredError="Password is required!"
+                              InputType="@_passwordInput" Adornment="Adornment.End" AdornmentIcon="@_passwordInputIcon" OnAdornmentClick="ShowPassword" AdornmentAriaLabel="Show Password" />
+                <br /><MudButton Variant="Variant.Filled" OnClick="HandleLogin" Color="Color.Primary">Login</MudButton>
+            </MudForm>
+        </MudCardContent>
+    </MudCard>
+</MudPaper>
+
+@code
+{
+    [Inject] private NavigationManager? NavigationManager { get; set; }
+    [Inject] private IAuthService? AuthService { get; set; }
+    [Inject] private IAuthDataService? AuthDataService { get; set; }
+    protected SignInModel LoginModel = new();
+    private bool _isShow;
+    protected string DisplayError { get; set; } = "none;";
+    private string? _returnUrl;
+    private InputType _passwordInput = InputType.Password;
+    private string _passwordInputIcon = Icons.Material.Filled.VisibilityOff;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        //Parse the query string for the return URL, so we can go there after login
+        if (String.IsNullOrEmpty(_returnUrl))
+        {
+            var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
+            if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("returnUrl", out var url))
+            {
+                _returnUrl = url;
+            }
+        }
+
+        //A hard reset was performed or the session was lost, try to restore the state and redirect back to the returnUrl
+        if (firstRender && !AuthService.IsLoggedIn)
+        {
+            var restoredFromState = await AuthService.GetStateFromTokenAsync();
+            if (restoredFromState)
+            {
+                if (!string.IsNullOrEmpty(_returnUrl))
+                {
+                    NavigationManager.NavigateTo(_returnUrl);
+                    _returnUrl = string.Empty;
+                }
+            }
+        }
+    }
+
+    protected async Task HandleLogin()
+    {
+        var loginResult = await AuthDataService.Login(LoginModel.Email, LoginModel.Password);
+
+        if (!loginResult.Success)
+        {
+            Snackbar.Add("Ongeldige login. Controleer je e-mail en wachtwoord.", Severity.Error);
+        }
+        else
+        {
+            await AuthService.Login(loginResult.Data);
+
+            if (!string.IsNullOrEmpty(_returnUrl))
+            {
+                NavigationManager.NavigateTo(_returnUrl);
+                _returnUrl = string.Empty;
+            }
+            else
+            {
+                Snackbar.Add("Succesvol ingelogd!", Severity.Success);
+                NavigationManager.NavigateTo("/auth");
+            }
+        }
+    }
+
+    private void ShowPassword()
+    {
+        if (_isShow)
+        {
+            _isShow = false;
+            _passwordInputIcon = Icons.Material.Filled.VisibilityOff;
+            _passwordInput = InputType.Password;
+        }
+        else
+        {
+            _isShow = true;
+            _passwordInputIcon = Icons.Material.Filled.Visibility;
+            _passwordInput = InputType.Text;
+        }
+    }
+                }

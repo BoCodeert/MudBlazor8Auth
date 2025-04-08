@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Components.Authorization;
 
-namespace Blazor8Auth.Services
+namespace Blazor8Auth.Services.Authorization
 {
     /// <summary>
     /// Updates the Blazor backend authentication state when the user changes.
