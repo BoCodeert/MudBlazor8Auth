@@ -1,3 +1,7 @@
+Forked this beautiful repo and added MudBlazor and a PasswordHasher to use as a template for later projects :).
+
+
+
 # Custom Authentication with Blazor 8 and Server Interactive Render Mode
 
 TLDR; Clone the GitHub repository below.  Review the Login.razor.cs HandleLogin method how it calls the AuthDataService for the custom authentication.  Then look at the code for the AuthService.cs Login method.  Finally, look at the MainLayout.razor OnAfterRenderAsync method how it refreshes the page if the session is lost.
